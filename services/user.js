@@ -39,7 +39,7 @@ module.exports = {
         user.fullName = userToCreate.fullName
         user.email = userToCreate.email
         user.password = SHA256(userToCreate.password).toString()
-        user.save()
+        await user.save()
     },
 
     signIn: async (userLogin) => {
@@ -49,7 +49,7 @@ module.exports = {
             const token = jwt.sign({
                 exp: Math.floor(Date.now() / 1000) + ((60 * 60) * 24), // one day
                 data: {
-                    user: dUser.user, password: dUser.password
+                    email: dUser.email, password: dUser.password
                 }
             }, SECRET)
             return token.toString()
