@@ -1,0 +1,11 @@
+version: '3'
+services:
+  db:
+    image: mongo:4.2.6-bionic
+    environment: 
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes: 
+      - "./db:/data/db "
+    ports: 
+      - "27017:27017"
