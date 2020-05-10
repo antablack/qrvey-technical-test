@@ -2,3 +2,4 @@
 /db
 /package-lock.json
 .prod.env
+/mochawesome-report
