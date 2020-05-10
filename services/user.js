@@ -1,8 +1,8 @@
 const { User } = require("../models")
-const Joi = require('@hapi/joi');
-const jwt = require('jsonwebtoken');
-const SHA256 = require("crypto-js/sha256");
-const { SECRET } = require("../config");
+const Joi = require('@hapi/joi')
+const jwt = require('jsonwebtoken')
+const SHA256 = require("crypto-js/sha256")
+const { SECRET } = require("../config")
 
 const userSchemaValidator = Joi.object({
     fullName: Joi.string()
@@ -56,5 +56,37 @@ module.exports = {
         } else {
             return
         }
-    }
+    },
+
+    getTimeUsers: async () => {
+        return await User.aggregate([
+            { $sort: { "created_at": -1 } },
+            {
+                $lookup:
+                {
+                    from: "tasks",
+                    localField: "_id",
+                    foreignField: "user",
+                    as: "task"
+                }
+            },
+        
+            {
+                $project: {
+                    "description": 1,
+                    "fullName": "$fullName",
+                    "email": "$email",
+                    "created_at": "$created_at",
+                    "timeSpent": {
+                        $reduce: {
+                            input: "$task",
+                            initialValue: 0,
+                            in: { $sum: ["$$value", "$$this.duration"] }
+                        }
+                    }
+                }
+            }
+        ])
+    },
+
 }

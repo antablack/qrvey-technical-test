@@ -35,6 +35,16 @@ api.post("/signin", (req, res) => {
 })
 
 
+api.get("/all", auth, (req, res) => {
+     user.getTimeUsers().then((users) => {
+         res.send(users)
+     }).catch((error) => {
+         console.log(error)
+         res.sendStatus(500)
+     })
+ })
+
+
 api.post("/signout", (req, res) => {
     res.clearCookie("Authorization");
     res.sendStatus(200);
