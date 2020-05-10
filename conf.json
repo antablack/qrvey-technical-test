@@ -1,0 +1,13 @@
+{
+    "source": {
+        "include": [
+            "models",
+            "services"
+        ],
+        "exclude": [
+            "node_modules"
+        ],
+        "includePattern": ".+\\.js(doc)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    }
+}
