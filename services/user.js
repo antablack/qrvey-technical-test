@@ -1,3 +1,6 @@
+/**
+ * @module services/user
+ */
 const { User } = require("../models")
 const jwt = require('jsonwebtoken')
 const SHA256 = require("crypto-js/sha256")
@@ -6,6 +9,14 @@ const { validators } = require("../utils")
 
 
 module.exports = {
+    /**
+     * Create a user
+     * @param {object} userToCreate Object project to create
+     * @param {string} userToCreate.fullName name of the user
+     * @param {string} userToCreate.email email of the user
+     * @param {string} userToCreate.password password
+     * @return {Promise} return a promise
+     */
     create: async (userToCreate) => {
         userToCreate = await validators.user.userSchemaValidator.validateAsync(userToCreate);
         let user = new User()
@@ -15,6 +26,13 @@ module.exports = {
         await user.save()
     },
 
+      /**
+     * Sign in
+     * @param {object} userLogin Object project to create
+     * @param {string} userLogin.email email of the user
+     * @param {string} userLogin.password password
+     * @return {Promise} return a promise
+     */
     signIn: async (userLogin) => {
         const { email, password } = await validators.user.signInSchemaValidator.validateAsync(userLogin);
         const dUser = await User.findOne({ email, password: SHA256(password).toString()});
@@ -31,6 +49,10 @@ module.exports = {
         }
     },
 
+    /**
+     * Get time spent by users
+     * @return {Promise<Array>} return a promise
+     */
     getTimeUsers: async () => {
         return await User.aggregate([
             { $sort: { "created_at": -1 } },

@@ -7,7 +7,8 @@
     "start": "NODE_ENV=prod node index.js",
     "start:dev": "NODE_ENV=dev nodemon index.js",
     "test": "NODE_ENV=test mocha 'test/**/*.js' --recursive --reporter mochawesome --timeout 60000 --exit && open ./mochawesome-report/mochawesome.html",
-    "test-coverage": "nyc --reporter=html npm run test && open ./coverage/index.html"
+    "test-coverage": "nyc --reporter=html npm run test && open ./coverage/index.html",
+    "jsdoc": "jsdoc -c ./conf.json -r ."
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "jsdoc": "^3.6.4",
     "mocha": "^7.1.2",
     "mocha-junit-reporter": "^1.23.3",
     "mochawesome": "^6.1.1",
