@@ -1,5 +1,6 @@
 const { Task } = require("../models")
-const Joi = require('@hapi/joi');
+const Joi = require('@hapi/joi')
+const { constants } = require("../utils")
 
 const taskSchemaValidator = Joi.object({
     name: Joi.string()
@@ -14,7 +15,7 @@ const changeOfStateSchemaValidator = Joi.object({
     userId: Joi.string().required(),
     taskId: Joi.string().required(),
     duration: Joi.number().positive().required().allow(0),
-    state: Joi.valid("PAUSED", "RESTARTED").required()
+    state: Joi.valid(constants.TASK_STATE.PAUSED, constants.TASK_STATE.RESTARTED).required()
 })
 
 module.exports = {
@@ -28,7 +29,7 @@ module.exports = {
     },
 
     continue: async (userId, taskId) => {
-        let dTask = await Task.findOne({_id: taskId, user: userId})
+        let dTask = await Task.findOne({ _id: taskId, user: userId })
         if (!dTask) return
         let task = {}
         task.name = dTask.name.toString()
@@ -45,12 +46,12 @@ module.exports = {
     changeOfState: async (data) => {
         console.log(data.userId)
         const { userId, taskId, duration, state } = await changeOfStateSchemaValidator.validateAsync(data);
-        let update = {state: state}
-        if (state === "PAUSED") {
+        let update = { state: state }
+        if (state === constants.TASK_STATE.PAUSED) {
             update.duration = duration
-        } else if (state === "RESTARTED") {
+        } else if (state === constants.TASK_STATE.RESTARTED) {
             update.duration = 0
         }
-        return await Task.findOneAndUpdate({ _id: taskId, user: userId}, update)
+        return await Task.findOneAndUpdate({ _id: taskId, user: userId }, update)
     },
 }
