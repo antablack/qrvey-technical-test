@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=dev nodemon -r dotenv/config index.js",
-    "prod": "",
+    "start": "NODE_ENV=dev nodemon index.js",
+    "prod": "NODE_ENV=prod node index.js",
     "test": "NODE_ENV=test mocha 'test/**/*.js' --recursive --reporter mochawesome --timeout 60000 --exit && open ./mochawesome-report/mochawesome.html",
     "test-coverage": "nyc --reporter=html npm run test && open ./coverage/index.html"
   },
