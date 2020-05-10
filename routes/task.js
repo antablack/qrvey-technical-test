@@ -33,10 +33,28 @@ api.put("/:taskId(([a-f0-9]{24}))/change-of-state", auth, (req, res) => {
     console.log(req.user)
     let data = {
         userId: req.user._id.toString(),
-        taskId: req.params.taskId, 
+        taskId: req.params.taskId,
         ...req.body
     }
     task.changeOfState(data).then((task) => {
+        if (task) {
+            res.sendStatus(200)
+        } else {
+            res.sendStatus(404)
+        }
+    }).catch((error) => {
+        console.log(error)
+        if (error.details) {
+            res.status(400).send({ error: error.message })
+            return
+        }
+        res.sendStatus(500)
+    })
+})
+
+
+api.put("/:taskId(([a-f0-9]{24}))/continue", auth, (req, res) => {
+    task.continue(req.user._id.toString(), req.params.taskId).then((task) => {
         if (task) {
             res.sendStatus(200)
         } else {

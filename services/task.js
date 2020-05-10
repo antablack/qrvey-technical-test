@@ -6,7 +6,7 @@ const taskSchemaValidator = Joi.object({
         .min(0)
         .max(500)
         .allow(""),
-    duration: Joi.number().positive(),
+    duration: Joi.number().positive().allow(0),
 })
 
 
@@ -22,9 +22,18 @@ module.exports = {
         const { name, duration } = await taskSchemaValidator.validateAsync(taskToCreate);
         let task = new Task()
         task.name = name
-        task.duration = duration
+        task.duration = duration || 0
         task.user = userId
-        await task.save()
+        return await task.save()
+    },
+
+    continue: async (userId, taskId) => {
+        let dTask = await Task.findOne({_id: taskId, user: userId})
+        if (!dTask) return
+        let task = {}
+        task.name = dTask.name.toString()
+        task.duration = parseInt(dTask.duration || 0)
+        return await module.exports.create(userId, task)
     },
 
     listAll: async (userId) => {
