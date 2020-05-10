@@ -1,40 +1,13 @@
 const { User } = require("../models")
-const Joi = require('@hapi/joi')
 const jwt = require('jsonwebtoken')
 const SHA256 = require("crypto-js/sha256")
 const { SECRET } = require("../config")
-
-const userSchemaValidator = Joi.object({
-    fullName: Joi.string()
-        .min(3)
-        .max(500)
-        .required(),
-
-    password: Joi.string()
-        .required()
-        .pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-
-    email: Joi.string()
-        .required()
-        .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'co'] } })
-})
-
-
-const signInSchemaValidator = Joi.object({
-
-    email: Joi.string()
-        .required()
-        .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'co'] } }),
-
-    password: Joi.string()
-        .required()
-        .pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
-})
+const { validators } = require("../utils")
 
 
 module.exports = {
     create: async (userToCreate) => {
-        userToCreate = await userSchemaValidator.validateAsync(userToCreate);
+        userToCreate = await validators.user.userSchemaValidator.validateAsync(userToCreate);
         let user = new User()
         user.fullName = userToCreate.fullName
         user.email = userToCreate.email
@@ -43,7 +16,7 @@ module.exports = {
     },
 
     signIn: async (userLogin) => {
-        const { email, password } = await signInSchemaValidator.validateAsync(userLogin);
+        const { email, password } = await validators.user.signInSchemaValidator.validateAsync(userLogin);
         const dUser = await User.findOne({ email, password: SHA256(password).toString()});
         if (dUser) {
             const token = jwt.sign({

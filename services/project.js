@@ -1,24 +1,10 @@
 const { Project } = require("../models")
 const mongoose = require("mongoose")
-const Joi = require('@hapi/joi')
-
-const projectSchemaValidator = Joi.object({
-    name: Joi.string()
-        .min(3)
-        .max(500)
-        .required()
-})
-
-const associateProjectSchemaValidator = Joi.object({
-    userId: Joi.string().required(),
-    projectId: Joi.string().required(),
-    taskId: Joi.string().required()
-})
-
+const { validators } = require("../utils")
 
 module.exports = {
     create: async (userId, projectToCreate) => {
-        const { name } = await projectSchemaValidator.validateAsync(projectToCreate);
+        const { name } = await validators.project.projectSchemaValidator.validateAsync(projectToCreate);
         let project = new Project()
         project.name = name
         project.user = userId
@@ -26,7 +12,7 @@ module.exports = {
     },
 
     associateTask: async (data) => {
-        const { userId, projectId, taskId } = await associateProjectSchemaValidator.validateAsync(data);
+        const { userId, projectId, taskId } = await validators.project.associateProjectSchemaValidator.validateAsync(data);
         let project = await Project.findOne({ _id: projectId, user: userId })
         if (!project) return
         project.tasks.push(taskId)
