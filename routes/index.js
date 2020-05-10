@@ -3,9 +3,10 @@ const api = express.Router();
 
 const user = require("./user")
 const project = require("./project")
-//const user = require("./user")
+const task = require("./task")
 
 api.use("/user", user)
 api.use("/project", project)
+api.use("/task", task)
 
 module.exports = api

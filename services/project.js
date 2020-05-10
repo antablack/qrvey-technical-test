@@ -20,7 +20,7 @@ module.exports = {
     listAll:  async (userId) => {
         return await Project.find({user: userId})
         .populate("user", "fullName email")
-        .sort({date: 'desc'})
+        .sort({created_at: 'desc'})
         .exec()
     }
 }

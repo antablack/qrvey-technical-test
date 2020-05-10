@@ -5,7 +5,7 @@ const schema = new mongoose.Schema({
     name: { type: String},
     user: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
     state: { type: String, required: true, default: "IN-PROGRESS" },
-    startDateTime: { type: Date, required: true, default: new Date() },
+    startDateTime: { type: Date, default: new Date() },
     endDateTime: Date,
     duration: { type: Number, default: 0},
 }, {

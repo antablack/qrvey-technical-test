@@ -20,7 +20,7 @@ api.post("/", auth, (req, res) => {
 })
 
 
-api.get("/", auth, (req, res) => {
+api.get("/all", auth, (req, res) => {
     console.log(req.user)
      project.listAll(req.user._id).then((projects) => {
          res.send(projects)
