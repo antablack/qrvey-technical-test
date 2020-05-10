@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>services/project.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Project.html">Project</a></li><li></li><li><a href="Task.html">Task</a></li><li></li><li><a href="User.html">User</a></li><li></li></ul><h3>Modules</h3><ul><li><a href="module-services_project.html">services/project</a><ul class='methods'><li data-type='method'><a href="module-services_project.html#.associateTask">associateTask</a></li><li data-type='method'><a href="module-services_project.html#.associateTask">associateTask</a></li><li data-type='method'><a href="module-services_project.html#.create">create</a></li><li data-type='method'><a href="module-services_project.html#.create">create</a></li><li data-type='method'><a href="module-services_project.html#.getTimeByProjectByUser">getTimeByProjectByUser</a></li><li data-type='method'><a href="module-services_project.html#.getTimeByProjectByUser">getTimeByProjectByUser</a></li><li data-type='method'><a href="module-services_project.html#.getTimeProjects">getTimeProjects</a></li><li data-type='method'><a href="module-services_project.html#.getTimeProjects">getTimeProjects</a></li></ul></li><li></li><li><a href="module-services_task.html">services/task</a><ul class='methods'><li data-type='method'><a href="module-services_task.html#.changeOfState">changeOfState</a></li><li data-type='method'><a href="module-services_task.html#.changeOfState">changeOfState</a></li><li data-type='method'><a href="module-services_task.html#.continue">continue</a></li><li data-type='method'><a href="module-services_task.html#.continue">continue</a></li><li data-type='method'><a href="module-services_task.html#.create">create</a></li><li data-type='method'><a href="module-services_task.html#.create">create</a></li><li data-type='method'><a href="module-services_task.html#.listAll">listAll</a></li><li data-type='method'><a href="module-services_task.html#.listAll">listAll</a></li></ul></li><li></li><li><a href="module-services_user.html">services/user</a><ul class='methods'><li data-type='method'><a href="module-services_user.html#.create">create</a></li><li data-type='method'><a href="module-services_user.html#.create">create</a></li><li data-type='method'><a href="module-services_user.html#.getTimeUsers">getTimeUsers</a></li><li data-type='method'><a href="module-services_user.html#.getTimeUsers">getTimeUsers</a></li><li data-type='method'><a href="module-services_user.html#.signIn">signIn</a></li><li data-type='method'><a href="module-services_user.html#.signIn">signIn</a></li></ul></li><li></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">services/project.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module services/project
+ */
+const { Project } = require("../models")
+const mongoose = require("mongoose")
+const { validators } = require("../utils")
+
+module.exports = {
+    /**
+     * Create a project
+     * @param {string} userId User id of the owner
+     * @param {object} projectToCreate Object project to create
+     * @param {string} projectToCreate.name name of the project
+     * @return {Promise} return a promise
+     */
+    create: async (userId, projectToCreate) => {
+        const { name } = await validators.project.projectSchemaValidator.validateAsync(projectToCreate);
+        let project = new Project()
+        project.name = name
+        project.user = userId
+        await project.save()
+    },
+
+    /**
+     * Associate project with task
+     * @param {object} data Object data
+     * @param {string} data.userId id of the user
+     * @param {string} data.projectId id of the project
+     * @param {string} data.taskId id of the task
+     * @return {Promise} return a promise
+     */
+    associateTask: async (data) => {
+        const { userId, projectId, taskId } = await validators.project.associateProjectSchemaValidator.validateAsync(data);
+        let project = await Project.findOne({ _id: projectId, user: userId })
+        if (!project) return
+        project.tasks.push(taskId)
+        return await project.save()
+    },
+
+     /**
+     * Get all projects with their time spent
+     * @param {object} filter filter to apply at the query
+     * @return {Promise&lt;Array>} return a promise
+     */
+    getTimeProjects: async (filter = {}) => {
+        return await Project.aggregate([
+            { $sort: { "created_at": -1 } },
+            { $match: filter },
+            {
+                $lookup:
+                {
+                    from: "tasks",
+                    localField: "tasks",
+                    foreignField: "_id",
+                    as: "task"
+                }
+            },
+            {
+                $project: {
+                    "description": 1,
+                    "name": "$name",
+                    "created_at": "$created_at",
+                    "timeSpent": {
+                        $reduce: {
+                            input: "$task",
+                            initialValue: 0,
+                            in: { $sum: ["$$value", "$$this.duration"] }
+                        }
+                    }
+                }
+            }
+        ])
+    },
+
+    /**
+     * Get time by project and user
+     * @param {string} projectId id of the project
+     * @param {string} userId id of the user
+     * @return {Promise&lt;Array>} return a promise
+     */
+    getTimeByProjectByUser: async (projectId, userId) => {
+        const project = await module.exports.getTimeProjects({ _id: mongoose.Types.ObjectId(projectId), user: userId })
+        if (project) {
+            return project[0]
+        }
+    },
+
+    listAll: async (userId) => {
+        return await Project.find({ user: userId })
+            .populate("user", "fullName email")
+            .sort({ created_at: 'desc' })
+            .exec()
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> on Sun May 10 2020 13:35:18 GMT-0500 (Colombia Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

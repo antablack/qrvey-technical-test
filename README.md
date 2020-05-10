@@ -13,3 +13,6 @@ The idea is to develop an API that allows to time tracking (similar to [Toggl.co
 -   Finally, each task must have a way to "continue" to rehabilitate that task (start to record time of a task taking the name of the one to be continued).
     
 -   There should be a way to see the list of all Projects for all users with the total time spent (per project as well as per user).
+
+## Documentation
+You can see the Class / Methods specifications openning  ./doc/index.html  file in the browser.

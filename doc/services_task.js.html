@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>services/task.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Project.html">Project</a></li><li></li><li><a href="Task.html">Task</a></li><li></li><li><a href="User.html">User</a></li><li></li></ul><h3>Modules</h3><ul><li><a href="module-services_project.html">services/project</a><ul class='methods'><li data-type='method'><a href="module-services_project.html#.associateTask">associateTask</a></li><li data-type='method'><a href="module-services_project.html#.associateTask">associateTask</a></li><li data-type='method'><a href="module-services_project.html#.create">create</a></li><li data-type='method'><a href="module-services_project.html#.create">create</a></li><li data-type='method'><a href="module-services_project.html#.getTimeByProjectByUser">getTimeByProjectByUser</a></li><li data-type='method'><a href="module-services_project.html#.getTimeByProjectByUser">getTimeByProjectByUser</a></li><li data-type='method'><a href="module-services_project.html#.getTimeProjects">getTimeProjects</a></li><li data-type='method'><a href="module-services_project.html#.getTimeProjects">getTimeProjects</a></li></ul></li><li></li><li><a href="module-services_task.html">services/task</a><ul class='methods'><li data-type='method'><a href="module-services_task.html#.changeOfState">changeOfState</a></li><li data-type='method'><a href="module-services_task.html#.changeOfState">changeOfState</a></li><li data-type='method'><a href="module-services_task.html#.continue">continue</a></li><li data-type='method'><a href="module-services_task.html#.continue">continue</a></li><li data-type='method'><a href="module-services_task.html#.create">create</a></li><li data-type='method'><a href="module-services_task.html#.create">create</a></li><li data-type='method'><a href="module-services_task.html#.listAll">listAll</a></li><li data-type='method'><a href="module-services_task.html#.listAll">listAll</a></li></ul></li><li></li><li><a href="module-services_user.html">services/user</a><ul class='methods'><li data-type='method'><a href="module-services_user.html#.create">create</a></li><li data-type='method'><a href="module-services_user.html#.create">create</a></li><li data-type='method'><a href="module-services_user.html#.getTimeUsers">getTimeUsers</a></li><li data-type='method'><a href="module-services_user.html#.getTimeUsers">getTimeUsers</a></li><li data-type='method'><a href="module-services_user.html#.signIn">signIn</a></li><li data-type='method'><a href="module-services_user.html#.signIn">signIn</a></li></ul></li><li></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">services/task.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module services/task
+ */
+const { Task } = require("../models")
+const Joi = require('@hapi/joi')
+const { constants, validators } = require("../utils")
+
+module.exports = {
+    /**
+     * Create a user
+     * @param {string} userId User id of the owner
+     * @param {object} taskToCreate Object task to create
+     * @param {string} taskToCreate.name name of the task
+     * @param {number} taskToCreate.duration duration in seconds of the task
+     * @return {Promise} return a promise
+     */
+    create: async (userId, taskToCreate) => {
+        const { name, duration } = await validators.task.taskSchemaValidator.validateAsync(taskToCreate);
+        let task = new Task()
+        task.name = name || ""
+        task.duration = duration || 0
+        task.user = userId
+        return await task.save()
+    },
+    
+    /**
+     * Continue task
+     * @param {string} userId User id of the owner
+     * @param {string} taskId Task id
+     * @return {Promise} return a promise
+     */
+    continue: async (userId, taskId) => {
+        let dTask = await Task.findOne({ _id: taskId, user: userId })
+        if (!dTask) return
+        let task = {}
+        task.name = dTask.name
+        task.duration = parseInt(dTask.duration || 0)
+        return await module.exports.create(userId, task)
+    },
+
+    /**
+     * Get all task by user
+     * @param {string} userId User id of the owner
+     * @return {Promise&lt;Array>} return a promise
+     */
+    listAll: async (userId) => {
+        return await Task.find({ user: userId })
+            .sort({ created_at: 'desc' })
+            .exec()
+    },
+
+    /**
+     * Change state of the task
+     * @param {object} data Object task to change of state
+     * @param {string} data.userId User id of the owner
+     * @param {string} data.taskId Task id
+     * @param {number} data.duration duration in seconds of the task
+     * @param {PAUSED|RESTARTED} data.state State to be changed
+     * @return {Promise} return a promise
+     */
+    changeOfState: async (data) => {
+        const { userId, taskId, duration, state } = await validators.task.changeOfStateSchemaValidator.validateAsync(data);
+        let update = {}
+        if (state === constants.TASK_STATE.PAUSED) {
+            update.duration = duration
+            update.state = state 
+        } else if (state === constants.TASK_STATE.RESTARTED) {
+            update.duration = 0
+            update.state = constants.TASK_STATE.IN_PROGRESS
+        }
+        return await Task.findOneAndUpdate({ _id: taskId, user: userId }, update)
+    },
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> on Sun May 10 2020 13:35:18 GMT-0500 (Colombia Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

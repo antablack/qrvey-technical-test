@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>services/user.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Project.html">Project</a></li><li></li><li><a href="Task.html">Task</a></li><li></li><li><a href="User.html">User</a></li><li></li></ul><h3>Modules</h3><ul><li><a href="module-services_project.html">services/project</a><ul class='methods'><li data-type='method'><a href="module-services_project.html#.associateTask">associateTask</a></li><li data-type='method'><a href="module-services_project.html#.associateTask">associateTask</a></li><li data-type='method'><a href="module-services_project.html#.create">create</a></li><li data-type='method'><a href="module-services_project.html#.create">create</a></li><li data-type='method'><a href="module-services_project.html#.getTimeByProjectByUser">getTimeByProjectByUser</a></li><li data-type='method'><a href="module-services_project.html#.getTimeByProjectByUser">getTimeByProjectByUser</a></li><li data-type='method'><a href="module-services_project.html#.getTimeProjects">getTimeProjects</a></li><li data-type='method'><a href="module-services_project.html#.getTimeProjects">getTimeProjects</a></li></ul></li><li></li><li><a href="module-services_task.html">services/task</a><ul class='methods'><li data-type='method'><a href="module-services_task.html#.changeOfState">changeOfState</a></li><li data-type='method'><a href="module-services_task.html#.changeOfState">changeOfState</a></li><li data-type='method'><a href="module-services_task.html#.continue">continue</a></li><li data-type='method'><a href="module-services_task.html#.continue">continue</a></li><li data-type='method'><a href="module-services_task.html#.create">create</a></li><li data-type='method'><a href="module-services_task.html#.create">create</a></li><li data-type='method'><a href="module-services_task.html#.listAll">listAll</a></li><li data-type='method'><a href="module-services_task.html#.listAll">listAll</a></li></ul></li><li></li><li><a href="module-services_user.html">services/user</a><ul class='methods'><li data-type='method'><a href="module-services_user.html#.create">create</a></li><li data-type='method'><a href="module-services_user.html#.create">create</a></li><li data-type='method'><a href="module-services_user.html#.getTimeUsers">getTimeUsers</a></li><li data-type='method'><a href="module-services_user.html#.getTimeUsers">getTimeUsers</a></li><li data-type='method'><a href="module-services_user.html#.signIn">signIn</a></li><li data-type='method'><a href="module-services_user.html#.signIn">signIn</a></li></ul></li><li></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">services/user.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module services/user
+ */
+const { User } = require("../models")
+const jwt = require('jsonwebtoken')
+const SHA256 = require("crypto-js/sha256")
+const { SECRET } = require("../config")
+const { validators } = require("../utils")
+
+
+module.exports = {
+    /**
+     * Create a user
+     * @param {object} userToCreate Object project to create
+     * @param {string} userToCreate.fullName name of the user
+     * @param {string} userToCreate.email email of the user
+     * @param {string} userToCreate.password password
+     * @return {Promise} return a promise
+     */
+    create: async (userToCreate) => {
+        userToCreate = await validators.user.userSchemaValidator.validateAsync(userToCreate);
+        let user = new User()
+        user.fullName = userToCreate.fullName
+        user.email = userToCreate.email
+        user.password = SHA256(userToCreate.password).toString()
+        await user.save()
+    },
+
+      /**
+     * Sign in
+     * @param {object} userLogin Object project to create
+     * @param {string} userLogin.email email of the user
+     * @param {string} userLogin.password password
+     * @return {Promise} return a promise
+     */
+    signIn: async (userLogin) => {
+        const { email, password } = await validators.user.signInSchemaValidator.validateAsync(userLogin);
+        const dUser = await User.findOne({ email, password: SHA256(password).toString()});
+        if (dUser) {
+            const token = jwt.sign({
+                exp: Math.floor(Date.now() / 1000) + ((60 * 60) * 24), // one day
+                data: {
+                    email: dUser.email, password: dUser.password
+                }
+            }, SECRET)
+            return token.toString()
+        } else {
+            return
+        }
+    },
+
+    /**
+     * Get time spent by users
+     * @return {Promise&lt;Array>} return a promise
+     */
+    getTimeUsers: async () => {
+        return await User.aggregate([
+            { $sort: { "created_at": -1 } },
+            {
+                $lookup:
+                {
+                    from: "tasks",
+                    localField: "_id",
+                    foreignField: "user",
+                    as: "task"
+                }
+            },
+        
+            {
+                $project: {
+                    "description": 1,
+                    "fullName": "$fullName",
+                    "email": "$email",
+                    "created_at": "$created_at",
+                    "timeSpent": {
+                        $reduce: {
+                            input: "$task",
+                            initialValue: 0,
+                            in: { $sum: ["$$value", "$$this.duration"] }
+                        }
+                    }
+                }
+            }
+        ])
+    },
+
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> on Sun May 10 2020 13:35:18 GMT-0500 (Colombia Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>
