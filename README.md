@@ -16,3 +16,7 @@ The idea is to develop an API that allows to time tracking (similar to [Toggl.co
 
 ## Documentation
 You can see the Class / Methods specifications openning  ./doc/index.html  file in the browser.
+
+To run locally ensure have installed nodejs( v10+) and Docker, then run those commands:
+    - docker-compose up
+    - npm run start:dev
