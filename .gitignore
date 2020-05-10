@@ -3,3 +3,5 @@
 /package-lock.json
 .prod.env
 /mochawesome-report
+/coverage
+.nyc_output

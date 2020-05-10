@@ -1,12 +1,13 @@
 {
-  "name": "qrvey",
+  "name": "qrvey-technical-test",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=dev nodemon -r dotenv/config index.js",
     "prod": "",
-    "test": "NODE_ENV=test mocha 'test/**/*.js' --recursive --timeout 60000 --exit"
+    "test": "NODE_ENV=test mocha 'test/**/*.js' --recursive --reporter mochawesome --timeout 60000 --exit && open ./mochawesome-report/mochawesome.html",
+    "test-coverage": "nyc --reporter=html npm run test && open ./coverage/index.html"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "mocha": "^7.1.2",
     "mocha-junit-reporter": "^1.23.3",
     "mochawesome": "^6.1.1",
-    "nodemon": "^2.0.3"
+    "nodemon": "^2.0.3",
+    "nyc": "^15.0.1"
   }
 }
